@@ -1,14 +1,14 @@
 package main
 import("net/http")
 
-func routes() *http.ServeMux {
+func (app *application) routes() *http.ServeMux {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("POST /posts", CreateNewPost)
-	mux.HandleFunc("GET /posts/id", GetPostById)
-	mux.HandleFunc("GET /posts", GetAllPost)
-	mux.HandleFunc("DELETE /posts/id", DeletePost)
-	mux.HandleFunc("PUT /posts/id", UpdatePost)
+	mux.HandleFunc("POST /posts", app.CreateNewPost)
+	mux.HandleFunc("GET /posts/id", app.GetPostById)
+	mux.HandleFunc("GET /posts", app.GetAllPost)
+	mux.HandleFunc("DELETE /posts/id", app.DeletePost)
+	mux.HandleFunc("PUT /posts/id", app.UpdatePost)
 
 	return mux
 }
