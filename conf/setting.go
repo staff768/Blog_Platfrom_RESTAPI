@@ -14,6 +14,8 @@ type setting struct {
 	PgUser     string
 	PgPass     string
 	PgBase     string
+	JwtSecret     string
+  	JwtExpiration string
 }
 
 var Cfg setting

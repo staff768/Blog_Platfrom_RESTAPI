@@ -2,10 +2,14 @@ package main
 
 import (
 	"blogplatform/internal/models"
+	"github.com/golang-jwt/jwt/v5"
+	"blogplatform/conf"
+	"time"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 
@@ -139,4 +143,122 @@ func (app *application) UpdatePost(w http.ResponseWriter, r* http.Request) {
 		app.infoLog.Printf("Error encoding JSON: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
+}
+
+func (app *application) Register(w http.ResponseWriter, r *http.Request){
+	var input_user struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	err := dec.Decode(&input_user)
+	if err != nil {
+		app.errorLog.Printf("Error decoding request: %v", err)
+	    http.Error(w, "Invalid request body", http.StatusBadRequest)
+    	return
+	}
+	if input_user.Email == "" || input_user.Password == "" {
+    	http.Error(w, "Email and password are required", http.StatusBadRequest)
+    	return
+	}
+
+
+	if !strings.Contains(input_user.Email, "@") {
+    	http.Error(w, "Invalid email format", http.StatusBadRequest)
+    	return
+	}
+
+
+	if len(input_user.Password) < 8 {
+    	http.Error(w, "Password must be at least 8 characters", http.StatusBadRequest)
+    	return
+	}
+	
+	if err := models.CreateUser(input_user.Email, input_user.Password); err != nil {
+	if errors.Is(err, models.ErrDuplicateEmail) {
+        http.Error(w, "Email already exists", http.StatusConflict)
+    } else {
+        app.errorLog.Printf("User creation failed: %v", err)
+        http.Error(w, "Internal server error", http.StatusInternalServerError)
+    }
+    	return
+	}
+	
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]string{
+    	"status": "success",
+    	"message": "User registered successfully",
+	})
+}
+
+func (app *application) Login(w http.ResponseWriter, r *http.Request) {
+    var input struct {
+        Email    string `json:"email"`
+        Password string `json:"password"`
+    }
+
+    
+    dec := json.NewDecoder(r.Body)
+    dec.DisallowUnknownFields()
+    if err := dec.Decode(&input); err != nil {
+        app.errorLog.Printf("JSON decode error: %v", err)
+        http.Error(w, "Invalid request format", http.StatusBadRequest)
+        return
+    }
+
+    if input.Email == "" || input.Password == "" {
+        http.Error(w, "Email and password are required", http.StatusBadRequest)
+        return
+    }
+
+    user, err := models.AuthenticateUser(input.Email, input.Password)
+    if err != nil {
+        if errors.Is(err, models.ErrInvalidCredentials) {
+            http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+        } else {
+            app.errorLog.Printf("Authentication error: %v", err)
+            http.Error(w, "Internal server error", http.StatusInternalServerError)
+        }
+        return
+    }
+
+    
+    expirationDuration, err := time.ParseDuration(conf.Cfg.JwtExpiration)
+    if err != nil {
+        app.errorLog.Printf("Invalid JWT expiration format: %v", err)
+        http.Error(w, "Server configuration error", http.StatusInternalServerError)
+        return
+    }
+	
+	if expirationDuration <= 0 {
+        app.errorLog.Printf("Invalid JWT expiration duration: %v", expirationDuration)
+        http.Error(w, "Server configuration error", http.StatusInternalServerError)
+        return
+    }
+
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+        "sub": user.ID, 
+        "exp": time.Now().Add(expirationDuration).Unix(), 
+        "iat": time.Now().Unix(),                         
+    })
+
+    
+    tokenString, err := token.SignedString([]byte(conf.Cfg.JwtSecret))
+    if err != nil {
+        app.errorLog.Printf("Token signing error: %v", err)
+        http.Error(w, "Internal server error", http.StatusInternalServerError)
+        return
+    }
+
+    
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(map[string]string{
+        "token":   tokenString,
+        "expires": expirationDuration.String(),
+        "user_id": strconv.Itoa(user.ID),
+    })
 }
