@@ -92,10 +92,9 @@ CREATE TABLE users (
 go run .\cmd\web\
 ```
 
-### API Endpoints
+### 🌐 API Endpoints
 
 Публичные:
-### 🌐 API Endpoints
 
 Публичные Endpoints:
 
