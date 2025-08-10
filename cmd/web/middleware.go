@@ -15,11 +15,10 @@ const userIDKey contextKey = "userID"
 
 func (app *application) AuthMiddleware(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        // Логируем входящий запрос
         app.infoLog.Printf("Incoming request: %s %s", r.Method, r.URL.Path)
         
         authHeader := r.Header.Get("Authorization")
-        app.infoLog.Printf("Authorization header: '%s'", authHeader) // Логируем заголовок
+        app.infoLog.Printf("Authorization header: '%s'", authHeader) 
         
         if authHeader == "" {
             app.errorLog.Println("Authorization header is missing")
@@ -35,7 +34,7 @@ func (app *application) AuthMiddleware(next http.Handler) http.Handler {
         }
         
         tokenString := strings.TrimPrefix(authHeader, prefix)
-        app.infoLog.Printf("Token string: '%s'", tokenString) // Логируем токен
+        app.infoLog.Printf("Token string: '%s'", tokenString) 
 
         token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
             if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
