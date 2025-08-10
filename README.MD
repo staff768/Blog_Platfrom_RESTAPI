@@ -124,5 +124,6 @@ Tокен должен быть без кавычек или других выд
 | GET    | /posts/id?id=1 | Получить пост по ID | -                                                                                     |
 | PUT    | /posts/id?id=1 | Обновить пост       | `{"title":"Updated","content":"New content","category":"online","tags":"table game"}` |
 | DELETE | /posts/id?id=1 | Удалить пост        | -                                                                                     |
+| GET    | /posts/random  | Получить рандомный  |
 
 

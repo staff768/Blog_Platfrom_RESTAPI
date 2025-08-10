@@ -13,6 +13,7 @@ func (app *application) routes() *http.ServeMux {
     protected.HandleFunc("GET /posts", app.GetAllPost)
     protected.HandleFunc("DELETE /posts/id", app.DeletePost)
     protected.HandleFunc("PUT /posts/id", app.UpdatePost)
+    protected.HandleFunc("GET /posts/random", app.GetRandomPost)
     
     protectedWithAuth := app.AuthMiddleware(protected)
     mux.Handle("/", protectedWithAuth)

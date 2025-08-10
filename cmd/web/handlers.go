@@ -262,3 +262,16 @@ func (app *application) Login(w http.ResponseWriter, r *http.Request) {
         "user_id": strconv.Itoa(user.ID),
     })
 }
+
+func (app *application)GetRandomPost(w http.ResponseWriter, r* http.Request){
+	rand_post, err := models.GetRandomPost()
+	if err != nil {
+		app.infoLog.Printf("Error while get rand post from data base, %v", err)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(rand_post)
+	if err != nil {
+		app.infoLog.Printf("Error encoding JSON: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
+}

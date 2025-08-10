@@ -99,3 +99,19 @@ func Update(id int, title,content,category, tags string) (error) {
 	}
 	return nil
 }
+
+func GetRandomPost()(*Post,error){
+	row := Db.QueryRow("SELECT * FROM post ORDER BY RANDOM() LIMIT 1")
+	p := &Post{}
+	err := row.Scan(&p.Id,&p.Title, &p.Content, &p.Category, &p.Tags)
+	if err != nil {
+		if errors.Is(err,sql.ErrNoRows) {
+			log.Printf("There is no such post in databse %s", err)
+			return nil, sql.ErrNoRows
+		} else {
+			log.Fatalf("Something went wrong while trying to get post by id %s", err)
+			return nil, err
+		}
+	}
+	return p, nil
+}
